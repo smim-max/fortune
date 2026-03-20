@@ -30,6 +30,7 @@ exports.handler = async (event) => {
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
+    // index.html이 data.content[0].text 로 읽으므로 이 형식으로 반환
     return {
       statusCode: 200,
       headers: {
@@ -37,7 +38,7 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
-        content: [{ text }],
+        content: [{ text: text }],
       }),
     };
   } catch (e) {
