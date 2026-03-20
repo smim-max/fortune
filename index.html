@@ -697,7 +697,7 @@ async function getFortune() {
     });
 
     const data = await res.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw = data.content?.[0]?.text || '';
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('응답 파싱 실패');
     const fortune = JSON.parse(jsonMatch[0]);
