@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 운세</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a14;
+    --surface: #0c1628;
+    --border: rgba(180,140,60,0.3);
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8dfc8;
+    --text-dim: rgba(232,223,200,0.5);
+    --accent: #7b5ea7;
+    --accent2: #3d7ab5;
+    --glow: rgba(201,168,76,0.25);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif KR', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Star field */
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,0.9), transparent),
+      radial-gradient(1px 1px at 70% 70%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(2px 2px at 90% 90%, rgba(255,255,200,0.6), transparent),
+      radial-gradient(1px 1px at 40% 60%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 60% 40%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 25% 35%, rgba(200,200,255,0.8), transparent);
+  }
+
+  /* Nebula glow */
+  .nebula {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(123,94,167,0.12), transparent),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(61,122,181,0.10), transparent),
+      radial-gradient(ellipse 70% 30% at 50% 50%, rgba(201,168,76,0.05), transparent);
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 1s ease both;
+  }
+
+  .header-emblem {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    filter: drop-shadow(0 0 20px var(--gold));
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .title-en {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(14px, 3vw, 18px);
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+
+  .title-kr {
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 40px var(--glow);
+    margin-bottom: 14px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; max-width: 400px;
+    margin: 0 auto 12px;
+  }
+  .divider-line { flex:1; height:1px; background: linear-gradient(to right, transparent, var(--border), transparent); }
+  .divider-icon { color: var(--gold); font-size: 14px; opacity:0.7; }
+
+  /* Input Card */
+  .input-card {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,168,76,0.1);
+    animation: fadeUp 1s 0.3s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .input-card::before {
+    content:'';
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,0.04), transparent);
+    pointer-events:none;
+  }
+
+  .input-label {
+    display: block;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .date-row {
+    display: flex; gap: 12px; margin-bottom: 24px;
+  }
+
+  .date-select {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15px;
+    padding: 14px 12px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    -webkit-appearance: none;
+    text-align: center;
+  }
+
+  .date-select:focus, .date-select:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .date-select option { background: #0c1628; }
+
+  /* Gender select */
+  .gender-row {
+    display: flex; gap: 12px; margin-bottom: 28px;
+  }
+
+  .gender-btn {
+    flex:1; padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-dim);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.05em;
+  }
+
+  .gender-btn.active, .gender-btn:hover {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold-light);
+  }
+
+  /* Fortune button */
+  .fortune-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #8b6914, #c9a84c, #8b6914);
+    background-size: 200% 100%;
+    border: none;
+    border-radius: 12px;
+    color: #0c0a04;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 30px rgba(201,168,76,0.3);
+  }
+
+  .fortune-btn:hover:not(:disabled) {
+    background-position: 100% 0;
+    box-shadow: 0 6px 40px rgba(201,168,76,0.5);
+    transform: translateY(-2px);
+  }
+
+  .fortune-btn:disabled {
+    opacity: 0.6; cursor: default; transform: none;
+  }
+
+  .fortune-btn::after {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+  }
+  .fortune-btn:hover::after { transform: translateX(100%); }
+
+  /* Loading */
+  .loading-state {
+    display: none;
+    text-align: center;
+    padding: 48px 0;
+    animation: fadeIn 0.4s ease both;
+  }
+
+  .loading-orb {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+
+  .orb-ring {
+    position:absolute; inset:0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: var(--gold);
+    animation: spin 1.2s linear infinite;
+  }
+  .orb-ring:nth-child(2) {
+    inset: 8px;
+    border-top-color: transparent;
+    border-right-color: var(--accent);
+    animation-duration: 1.8s;
+    animation-direction: reverse;
+  }
+  .orb-ring:nth-child(3) {
+    inset: 16px;
+    border-top-color: var(--accent2);
+    animation-duration: 2.4s;
+  }
+  .orb-center {
+    position:absolute; inset: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--gold-light), var(--gold));
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 20px var(--gold);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    animation: flicker 2s ease-in-out infinite;
+  }
+
+  @keyframes flicker { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+  /* Result card */
+  .result-card {
+    display: none;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    margin-top: 28px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.5), 0 0 80px rgba(201,168,76,0.05);
+    animation: revealCard 0.8s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  @keyframes revealCard {
+    from { opacity:0; transform: translateY(20px) scale(0.98); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  .result-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-sign {
+    font-size: 36px;
+    filter: drop-shadow(0 0 12px var(--gold));
+  }
+
+  .result-meta h3 {
+    font-size: 18px;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .result-meta p {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  /* Score bars */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .score-item label {
+    display: flex; justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 7px;
+  }
+
+  .score-item label span { color: var(--gold); font-weight: 600; }
+
+  .score-bar {
+    height: 5px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    width: 0%;
+    transition: width 1.5s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  /* Fortune text sections */
+  .fortune-section {
+    margin-bottom: 22px;
+  }
+
+  .fortune-section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .fortune-section-title::after {
+    content:''; flex:1; height:1px;
+    background: linear-gradient(to right, var(--border), transparent);
+  }
+
+  .fortune-text {
+    font-size: 15px;
+    line-height: 1.95;
+    color: var(--text);
+    font-weight: 300;
+    white-space: pre-wrap;
+  }
+
+  /* Lucky items */
+  .lucky-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .lucky-tag {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--gold-light);
+    background: var(--gold-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* Retry button */
+  .retry-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-dim);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.1em;
+  }
+
+  .retry-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    color: #e07070;
+    font-size: 13px;
+    margin-top: 14px;
+    text-align: center;
+    padding: 12px;
+    border: 1px solid rgba(224,112,112,0.2);
+    border-radius: 8px;
+    background: rgba(224,112,112,0.05);
+  }
+
+  /* Animations */
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(20px)}  to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    opacity: 0.5;
+    letter-spacing: 0.1em;
+    animation: fadeIn 1s 1s ease both;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 40px 16px 60px; }
+    .input-card, .result-card { padding: 28px 20px; }
+    .date-row { gap: 8px; }
+    .score-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+<div class="nebula"></div>
+
+<div class="container">
+
+  <header class="header">
+    <span class="header-emblem">🔮</span>
+    <p class="title-en">Daily Fortune</p>
+    <h1 class="title-kr">오늘의 운세</h1>
+    <p class="subtitle">생년월일로 알아보는 나의 오늘</p>
+  </header>
+
+  <div class="input-card" id="inputCard">
+    <span class="input-label">✦ 생년월일을 입력하세요</span>
+
+    <div class="date-row">
+      <select class="date-select" id="year" aria-label="년">
+        <option value="">년</option>
+      </select>
+      <select class="date-select" id="month" aria-label="월">
+        <option value="">월</option>
+      </select>
+      <select class="date-select" id="day" aria-label="일">
+        <option value="">일</option>
+      </select>
+    </div>
+
+    <span class="input-label">✦ 성별</span>
+    <div class="gender-row">
+      <button class="gender-btn" id="genderM" onclick="selectGender('남성')">♂ 남성</button>
+      <button class="gender-btn" id="genderF" onclick="selectGender('여성')">♀ 여성</button>
+    </div>
+
+    <button class="fortune-btn" id="fortuneBtn" onclick="getFortune()">
+      ✧ 오늘의 운세 보기 ✧
+    </button>
+
+    <p class="error-msg" id="errorMsg"></p>
+
+    <div class="loading-state" id="loadingState">
+      <div class="loading-orb">
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-center"></div>
+      </div>
+      <p class="loading-text" id="loadingText">별자리를 읽는 중...</p>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <span class="result-sign" id="resultSign">⭐</span>
+      <div class="result-meta">
+        <h3 id="resultTitle">오늘의 운세</h3>
+        <p id="resultDate"></p>
+      </div>
+    </div>
+
+    <div class="score-grid" id="scoreGrid"></div>
+
+    <div id="fortuneSections"></div>
+
+    <button class="retry-btn" onclick="resetFortune()">↺ 다시 보기</button>
+  </div>
+
+  <footer class="footer">
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-icon">✦</span>
+      <div class="divider-line"></div>
+    </div>
+    <p>운세는 재미로만 참고하세요 · Powered by Claude AI</p>
+  </footer>
+</div>
+
+<script>
+// Populate selects
+const yearSel = document.getElementById('year');
+const monthSel = document.getElementById('month');
+const daySel = document.getElementById('day');
+
+for (let y = 2010; y >= 1940; y--) {
+  const o = document.createElement('option');
+  o.value = y; o.textContent = y + '년';
+  yearSel.appendChild(o);
+}
+for (let m = 1; m <= 12; m++) {
+  const o = document.createElement('option');
+  o.value = m; o.textContent = m + '월';
+  monthSel.appendChild(o);
+}
+for (let d = 1; d <= 31; d++) {
+  const o = document.createElement('option');
+  o.value = d; o.textContent = d + '일';
+  daySel.appendChild(o);
+}
+
+let selectedGender = '';
+
+function selectGender(g) {
+  selectedGender = g;
+  document.getElementById('genderM').classList.toggle('active', g === '남성');
+  document.getElementById('genderF').classList.toggle('active', g === '여성');
+}
+
+// Zodiac
+function getZodiac(month, day) {
+  const signs = [
+    { name:'염소자리', emoji:'♑', start:[12,22], end:[1,19] },
+    { name:'물병자리', emoji:'♒', start:[1,20], end:[2,18] },
+    { name:'물고기자리', emoji:'♓', start:[2,19], end:[3,20] },
+    { name:'양자리', emoji:'♈', start:[3,21], end:[4,19] },
+    { name:'황소자리', emoji:'♉', start:[4,20], end:[5,20] },
+    { name:'쌍둥이자리', emoji:'♊', start:[5,21], end:[6,20] },
+    { name:'게자리', emoji:'♋', start:[6,21], end:[7,22] },
+    { name:'사자자리', emoji:'♌', start:[7,23], end:[8,22] },
+    { name:'처녀자리', emoji:'♍', start:[8,23], end:[9,22] },
+    { name:'천칭자리', emoji:'♎', start:[9,23], end:[10,22] },
+    { name:'전갈자리', emoji:'♏', start:[10,23], end:[11,21] },
+    { name:'사수자리', emoji:'♐', start:[11,22], end:[12,21] },
+  ];
+  const md = month * 100 + day;
+  for (const s of signs) {
+    const start = s.start[0] * 100 + s.start[1];
+    const end = s.end[0] * 100 + s.end[1];
+    if (start > end) { // Capricorn straddles year
+      if (md >= start || md <= end) return s;
+    } else {
+      if (md >= start && md <= end) return s;
+    }
+  }
+  return signs[0];
+}
+
+// Chinese zodiac
+function getChineseZodiac(year) {
+  const animals = ['원숭이','닭','개','돼지','쥐','소','호랑이','토끼','용','뱀','말','양'];
+  return animals[year % 12];
+}
+
+const loadingMessages = [
+  '별자리를 읽는 중...',
+  '천체의 기운을 모으는 중...',
+  '운명의 실을 엮는 중...',
+  '오늘의 기운을 분석하는 중...',
+];
+
+async function getFortune() {
+  const year = yearSel.value;
+  const month = monthSel.value;
+  const day = daySel.value;
+
+  if (!year || !month || !day) {
+    showError('생년월일을 모두 선택해 주세요.');
+    return;
+  }
+  if (!selectedGender) {
+    showError('성별을 선택해 주세요.');
+    return;
+  }
+
+  hideError();
+  const btn = document.getElementById('fortuneBtn');
+  const loading = document.getElementById('loadingState');
+  const loadingText = document.getElementById('loadingText');
+
+  btn.disabled = true;
+  loading.style.display = 'block';
+
+  // Cycle loading messages
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    loadingText.textContent = loadingMessages[msgIdx++ % loadingMessages.length];
+  }, 1800);
+
+  const zodiac = getZodiac(+month, +day);
+  const chineseAnimal = getChineseZodiac(+year);
+  const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+
+  const prompt = `당신은 신비롭고 통찰력 있는 동양 점성술사입니다. 아래 정보를 바탕으로 오늘의 운세를 JSON 형식으로 작성해 주세요.
+
+사용자 정보:
+- 생년월일: ${year}년 ${month}월 ${day}일
+- 성별: ${selectedGender}
+- 별자리: ${zodiac.name}
+- 띠: ${chineseAnimal}띠
+- 오늘 날짜: ${today}
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "overall": 1~100 사이 숫자 (총운 점수),
+  "love": 1~100 사이 숫자 (애정운 점수),
+  "money": 1~100 사이 숫자 (금전운 점수),
+  "health": 1~100 사이 숫자 (건강운 점수),
+  "work": 1~100 사이 숫자 (직업운 점수),
+  "summary": "오늘의 총운 요약 (2~3문장, 구체적이고 개인화된 내용)",
+  "love_text": "애정운 설명 (2문장)",
+  "money_text": "금전운 설명 (2문장)",
+  "health_text": "건강운 설명 (2문장)",
+  "advice": "오늘의 조언 한 마디 (인상적이고 시적인 한 문장)",
+  "lucky_color": "행운의 색깔",
+  "lucky_number": "행운의 숫자",
+  "lucky_direction": "행운의 방향",
+  "lucky_time": "행운의 시간대"
+}`;
+
+  try {
+    const res = await fetch('/.netlify/functions/fortune', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('응답 파싱 실패');
+    const fortune = JSON.parse(jsonMatch[0]);
+
+    clearInterval(msgInterval);
+    loading.style.display = 'none';
+    btn.disabled = false;
+
+    renderResult(fortune, zodiac, year, month, day, chineseAnimal, today);
+
+  } catch (e) {
+    clearInterval(msgInterval);
+    loading.style.display = 'none';
+    btn.disabled = false;
+    showError('운세를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+function renderResult(f, zodiac, year, month, day, animal, today) {
+  // Header
+  document.getElementById('resultSign').textContent = zodiac.emoji;
+  document.getElementById('resultTitle').textContent = `${zodiac.name} · ${animal}띠`;
+  document.getElementById('resultDate').textContent = today;
+
+  // Scores
+  const scores = [
+    { label: '총운', key: 'overall', icon: '☆' },
+    { label: '애정운', key: 'love', icon: '♡' },
+    { label: '금전운', key: 'money', icon: '◇' },
+    { label: '건강운', key: 'health', icon: '✦' },
+    { label: '직업운', key: 'work', icon: '△' },
+  ];
+  const grid = document.getElementById('scoreGrid');
+  grid.innerHTML = '';
+  scores.forEach(s => {
+    const val = f[s.key] || 50;
+    const div = document.createElement('div');
+    div.className = 'score-item';
+    div.innerHTML = `
+      <label>${s.icon} ${s.label} <span>${val}</span></label>
+      <div class="score-bar"><div class="score-fill" data-val="${val}"></div></div>`;
+    grid.appendChild(div);
+  });
+
+  // Sections
+  const sections = [
+    { title: '✦ 오늘의 총운', text: f.summary },
+    { title: '♡ 애정운', text: f.love_text },
+    { title: '◇ 금전운', text: f.money_text },
+    { title: '✦ 건강운', text: f.health_text },
+    { title: '☆ 오늘의 조언', text: f.advice },
+  ];
+
+  const sectionsEl = document.getElementById('fortuneSections');
+  sectionsEl.innerHTML = '';
+  sections.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'fortune-section';
+    div.innerHTML = `
+      <div class="fortune-section-title">${s.title}</div>
+      <p class="fortune-text">${s.text}</p>`;
+    sectionsEl.appendChild(div);
+  });
+
+  // Lucky items
+  const luckyDiv = document.createElement('div');
+  luckyDiv.className = 'fortune-section';
+  luckyDiv.innerHTML = `
+    <div class="fortune-section-title">✧ 오늘의 행운 아이템</div>
+    <div class="lucky-row">
+      <span class="lucky-tag">🎨 ${f.lucky_color}</span>
+      <span class="lucky-tag">🔢 ${f.lucky_number}</span>
+      <span class="lucky-tag">🧭 ${f.lucky_direction}</span>
+      <span class="lucky-tag">⏰ ${f.lucky_time}</span>
+    </div>`;
+  sectionsEl.appendChild(luckyDiv);
+
+  // Show result
+  const resultCard = document.getElementById('resultCard');
+  resultCard.style.display = 'block';
+
+  // Animate score bars after render
+  setTimeout(() => {
+    document.querySelectorAll('.score-fill').forEach(el => {
+      el.style.width = el.dataset.val + '%';
+    });
+  }, 100);
+
+  resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetFortune() {
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('inputCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorMsg').style.display = 'none';
+}
+</script>
+</body>
+</html>
