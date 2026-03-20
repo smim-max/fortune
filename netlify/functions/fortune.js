@@ -15,22 +15,22 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const userMessage = body.messages?.[0]?.content || '';
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userMessage }] }],
-          generationConfig: { maxOutputTokens: 1000 },
-        }),
-      }
-    );
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
 
-    // index.html이 data.content[0].text 로 읽으므로 이 형식으로 반환
     return {
       statusCode: 200,
       headers: {
